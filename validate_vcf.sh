@@ -2,12 +2,23 @@
 # validate calls in VCF format
 set -e
 
-usage='cat svs.vcf | validate_vcf.sh <bam> <yaha_index>'
+usage='cat svs.vcf | validate_vcf.sh <bam> <yaha_index> [read header pattern]'
 
 if [ $# -ne 2 ]; then 
 	echo $usage
 	exit
 fi
+
+rh=${3:-@SR}
+
+function unqdir() {
+	if [ ! -d "$1" ]; then
+		mkdir "$1" && cd "$1"
+	else 
+		newdir="${1}_"
+		unqdir "$newdir"
+	fi
+}
 
 bam=`realpath $1`
 idx=`realpath $2`
@@ -24,14 +35,14 @@ while read i; do
 
 	event=`echo "$i" | egrep -o 'SVTYPE=[^;]*' | sed 's/SVTYPE=//'`
 		
-	#>&2 echo $event
+	>&2 echo $event
 	case "$event" in
 	"DEL")
 		sv=`echo "$i" | cut -f1,2`
 		reg=`echo "$sv" | awk '{print $1, $2-1000, $2+1000}'| tr ' ' '-' | sed 's/-/:/'`
 		dir=`echo "del_$sv" | sed 's/\t/_/'`
-		mkdir $dir && cd $dir
-		get_reads.sh $bam $reg &> .errgetreads
+		unqdir "$dir"
+		get_reads.sh $bam $reg r $rh &> .errgetreads
 		run_fermi.sh r1.fq r2.fq &> .errfrm
 		yaha -t $THREADS -x $idx -q frm.fa -o8 yh &> .erryaha
 		val=`cat yh | is_del.pl $sv 2> .errisdel`
@@ -44,8 +55,8 @@ while read i; do
 		sv=`echo "$i" | cut -f1,2`
 		reg=`echo "$sv" | awk '{print $1, $2-1000, $2+1000}'| tr ' ' '-' | sed 's/-/:/'`
 		dir=`echo "ins_$sv" | sed 's/\t/_/'`
-		mkdir $dir && cd $dir
-		get_reads.sh $bam $reg &> .errgetreads
+		unqdir "$dir"
+		get_reads.sh $bam $reg r $rh &> .errgetreads
 		run_fermi.sh r1.fq r2.fq &> .errfrm
 		yaha -t $THREADS -x $idx -q frm.fa -o8 yh &> .erryaha
 		val=`cat yh | is_ins.pl $sv 2> .errisins`
@@ -58,8 +69,8 @@ while read i; do
 		sv=`echo "$i" | cut -f1,2`
 		reg=`echo "$sv" | awk '{print $1, $2-1000, $2+1000}'| tr ' ' '-' | sed 's/-/:/'`
 		dir=`echo "inv_$sv" | sed 's/\t/_/'`
-		mkdir $dir && cd $dir
-		get_reads.sh $bam $reg &> .errgetreads
+		unqdir "$dir"
+		get_reads.sh $bam $reg r $rh &> .errgetreads
 		run_fermi.sh r1.fq r2.fq &> .errfrm
 		yaha -t $THREADS -x $idx -q frm.fa -o8 yh &> .erryaha
 		val=`cat yh | is_inv.pl $sv 2> .errisinv`
@@ -72,8 +83,8 @@ while read i; do
 		sv=`echo "$i" | cut -f1,2`
 		reg=`echo "$sv" | awk '{print $1, $2-1000, $2+1000}'| tr ' ' '-' | sed 's/-/:/'`
 		dir=`echo "dup_$sv" | sed 's/\t/_/'`
-		mkdir $dir && cd $dir
-		get_reads.sh $bam $reg &> .errgetreads
+		unqdir "$dir"
+		get_reads.sh $bam $reg r $rh &> .errgetreads
 		run_fermi.sh r1.fq r2.fq &> .errfrm
 		yaha -t $THREADS -x $idx -q frm.fa -FBS Y -o8 yh &> .erryaha
 		val=`cat yh | is_dup.pl $sv 2> .errisdup`
@@ -87,8 +98,8 @@ while read i; do
 		#sv=`echo "$i" | cut -f1,2,5 | perl -pe 's/\S*?([A-Z]*):([0-9]*)[^\s]*/\1\t\2/'` # break-end format
 		reg=`echo "$sv" | awk '{print $1, $2-1000, $2+1000}'| tr ' ' '-' | sed 's/-/:/'`
 		dir=`echo "bnd_$sv" | sed 's/\t/_/g'`
-		mkdir $dir && cd $dir
-		get_reads.sh $bam $reg &> .errgetreads	
+		unqdir "$dir"
+		get_reads.sh $bam $reg r $rh &> .errgetreads	
 		run_fermi.sh r1.fq r2.fq &> .errfrm
 		yaha -t $THREADS -x $idx -q frm.fa -FBS Y > yh.sam 2> .erryaha
 		samtools view -bh yh.sam > yh.bam
@@ -103,4 +114,5 @@ while read i; do
 done 
 
 cd ..
+# comment out this line to keep intermediate files
 rm -rf valsv.tmpdir
