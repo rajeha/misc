@@ -1,17 +1,19 @@
 #!/usr/bin/env bash
-# get_reads.sh <bam> [region]
-# TODO: add argument for reads header
+
+usage="get_reads.sh <bam> <region> [output prefix] [read header pattern]"
+
 if [ $# -lt 2 ]; then 
-	echo "get_reads.sh <bam> <region> [output prefix]"
+	echo $usage; 
 	exit
 fi
 
 opref=${3:-r}
+rh=${4:-@SR} # default read header starts with @SR
 
 samtools view -h $1 $2 | samtools fastq -1 r1.tmp -2 r2.tmp -
 
-perl -pi -e 's/\@SR.+\S/$&\/1/' r1.tmp 
-perl -pi -e 's/\@SR.+\S/$&\/2/' r2.tmp 
+perl -pi -e "s/\$rh.+\S/\$&\/1/" r1.tmp 
+perl -pi -e "s/\$rh.+\S/\$&\/2/" r2.tmp 
 
 fix_pairs.pl r1.tmp r2.tmp $opref
 
