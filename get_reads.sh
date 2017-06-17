@@ -1,5 +1,7 @@
 #!/usr/bin/env bash
-
+# Because of advanced, sophisticated optional arguemnt handling,
+# the user must set arg 3 to be able to set arg 4.
+ 
 usage="get_reads.sh <bam> <region> [output prefix] [read header pattern]"
 
 if [ $# -lt 2 ]; then 
