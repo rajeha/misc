@@ -4,7 +4,7 @@ usage='run_ferm.sh <r1.fq> <r2.fq> [output prefix]'
 
 if [ $# -lt 2 ]; then
 	echo $usage 
-	exit;
+	exit 1
 fi
 
 opref=${3:-frm}
