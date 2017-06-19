@@ -14,7 +14,7 @@ usage='cat svs.vcf | validate_vcf.sh <bam> <yaha_index> [read header pattern]'
 
 if [ $# -ne 2 ]; then 
 	echo $usage
-	exit
+	exit 1
 fi
 
 rh=${3:-@SR}
