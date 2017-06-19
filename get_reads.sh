@@ -6,7 +6,7 @@ usage="get_reads.sh <bam> <region> [output prefix] [read header pattern]"
 
 if [ $# -lt 2 ]; then 
 	echo $usage; 
-	exit
+	exit 1
 fi
 
 opref=${3:-r}
