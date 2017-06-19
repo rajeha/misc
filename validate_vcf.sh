@@ -1,5 +1,13 @@
 #!/usr/bin/env bash
 # validate calls in VCF format
+# requires:
+#   yaha             (GregoryFaust/yaha)
+#   fermi-lite       (lh3/fermi-lite)
+#   is_*.pl scripts  (rajeha/validate-SV)
+#   get_reads.sh     (rajeha/misc)
+#   run_fermi.sh     (rajeha/misc)
+#   fix_pairs.pl     (rajeha/fixpairs)
+
 set -e
 
 usage='cat svs.vcf | validate_vcf.sh <bam> <yaha_index> [read header pattern]'
